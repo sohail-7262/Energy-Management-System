@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Smart Energy Management System – Real-time energy monitoring dashboard with appliance-level insights." />
+    <title>Smart Energy Management System</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        /* ===== CSS Reset & Custom Properties ===== */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #06091a;
+            --bg-secondary: #0d1229;
+            --bg-card: #111738;
+            --bg-card-hover: #161e48;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+            --accent-amber: #f59e0b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: rgba(59, 130, 246, 0.15);
+            --glow-blue: 0 0 25px rgba(59, 130, 246, 0.3);
+            --glow-cyan: 0 0 25px rgba(6, 182, 212, 0.3);
+            --glow-green: 0 0 20px rgba(34, 197, 94, 0.25);
+            --glow-red: 0 0 20px rgba(239, 68, 68, 0.25);
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 24px;
+            --transition-fast: 0.2s ease;
+            --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* ===== Animated Background ===== */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.03) 0%, transparent 50%);
+            animation: bgShift 20s ease-in-out infinite alternate;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes bgShift {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-3%, 3%) rotate(1deg); }
+            100% { transform: translate(3%, -2%) rotate(-1deg); }
+        }
+
+        /* ===== Container ===== */
+        .dashboard {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px 60px;
+        }
+
+        /* ===== Header ===== */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeSlideDown 0.6s ease-out both;
+        }
+
+        .header h1 {
+            font-size: clamp(1.6rem, 4vw, 2.4rem);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientText 6s ease-in-out infinite;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 6px;
+        }
+
+        @keyframes gradientText {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* ===== Live Indicator ===== */
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            padding: 4px 14px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin-top: 12px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: livePulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+            50% { opacity: 0.5; box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+        }
+
+        /* ===== Viewing Label ===== */
+        .viewing-label {
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            min-height: 32px;
+            transition: var(--transition-smooth);
+            animation: fadeSlideDown 0.6s ease-out 0.15s both;
+        }
+
+        .viewing-label span {
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        /* ===== Energy Cards Grid ===== */
+        .energy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+            animation: fadeSlideUp 0.6s ease-out 0.2s both;
+        }
+
+        .energy-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 28px 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+        }
+
+        .energy-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        }
+
+        .energy-card:nth-child(1)::before {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+        }
+
+        .energy-card:nth-child(2)::before {
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+        }
+
+        .energy-card:nth-child(3)::before {
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+        }
+
+        .energy-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--glow-blue);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .energy-card .card-icon {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .energy-card .card-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .energy-card .card-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            transition: var(--transition-smooth);
+        }
+
+        .energy-card .card-unit {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .card-value.value-current {
+            color: var(--accent-cyan);
+        }
+
+        .card-value.value-predicted {
+            color: var(--accent-purple);
+        }
+
+        /* Status classes */
+        .status-normal {
+            color: var(--accent-green) !important;
+        }
+
+        .status-alert {
+            color: var(--accent-red) !important;
+            animation: alertFlash 2s ease-in-out infinite;
+        }
+
+        .status-optimal {
+            color: #38bdf8 !important;
+        }
+
+        @keyframes alertFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.65; }
+        }
+
+        /* ===== Appliance Section ===== */
+        .section-title {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-primary);
+            animation: fadeSlideUp 0.6s ease-out 0.35s both;
+        }
+
+        .section-title::before,
+        .section-title::after {
+            content: '';
+            width: 50px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--text-muted), transparent);
+        }
+
+        .appliance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            animation: fadeSlideUp 0.6s ease-out 0.45s both;
+        }
+
+        .appliance-card {
+            background: var(--bg-card);
+            border: 1.5px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 22px 16px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition:
+                transform var(--transition-bounce),
+                box-shadow var(--transition-smooth),
+                border-color var(--transition-smooth),
+                opacity var(--transition-smooth),
+                background var(--transition-smooth);
+            user-select: none;
+        }
+
+        .appliance-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius-md);
+            opacity: 0;
+            transition: opacity var(--transition-smooth);
+            pointer-events: none;
+        }
+
+        .appliance-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            background: var(--bg-card-hover);
+            border-color: rgba(59, 130, 246, 0.35);
+            box-shadow: var(--glow-blue);
+        }
+
+        /* --- Selected State --- */
+        .appliance-card.selected {
+            transform: translateY(-6px) scale(1.05);
+            border-color: var(--accent-cyan);
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(59, 130, 246, 0.08));
+            box-shadow:
+                0 0 30px rgba(6, 182, 212, 0.2),
+                0 0 60px rgba(6, 182, 212, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .appliance-card.selected::after {
+            opacity: 1;
+            background: radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.12), transparent 70%);
+        }
+
+        /* --- Dimmed unselected when one is selected --- */
+        .appliance-grid.has-selection .appliance-card:not(.selected) {
+            opacity: 0.5;
+            filter: saturate(0.6);
+        }
+
+        .appliance-grid.has-selection .appliance-card:not(.selected):hover {
+            opacity: 0.85;
+            filter: saturate(1);
+        }
+
+        .appliance-emoji {
+            font-size: 2.4rem;
+            display: block;
+            margin-bottom: 10px;
+            transition: transform var(--transition-bounce);
+        }
+
+        .appliance-card:hover .appliance-emoji,
+        .appliance-card.selected .appliance-emoji {
+            transform: scale(1.15);
+        }
+
+        .appliance-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .appliance-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 3px 12px;
+            border-radius: 100px;
+            background: rgba(34, 197, 94, 0.12);
+            color: var(--accent-green);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+            animation: livePulse 2s ease-in-out infinite;
+        }
+
+        /* ===== Footer ===== */
+        .footer {
+            text-align: center;
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            animation: fadeSlideUp 0.6s ease-out 0.55s both;
+        }
+
+        .footer span {
+            color: var(--accent-cyan);
+        }
+
+        /* ===== Animations ===== */
+        @keyframes fadeSlideDown {
+            from { opacity: 0; transform: translateY(-18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes valueUpdate {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.06); }
+            100% { transform: scale(1); }
+        }
+
+        .value-flash {
+            animation: valueUpdate 0.4s ease-out;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .dashboard {
+                padding: 20px 14px 40px;
+            }
+
+            .energy-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .appliance-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .energy-card .card-value {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .appliance-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ===== Error / Offline Banner ===== */
+        .offline-banner {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            color: var(--accent-red);
+            font-weight: 500;
+            margin-bottom: 24px;
+            text-align: center;
+            animation: fadeSlideDown 0.3s ease-out;
+        }
+
+        .offline-banner.visible {
+            display: flex;
+        }
+
+        /* ===== Skeleton Loader ===== */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-card) 25%, rgba(255,255,255,0.04) 50%, var(--bg-card) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-text {
+            width: 80px;
+            height: 36px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard">
+
+        <!-- Header -->
+        <header class="header" id="header">
+            <h1>⚡ Smart Energy Management System</h1>
+            <p>Real-time monitoring &amp; intelligent energy insights</p>
+            <div class="live-badge">
+                <span class="live-dot"></span>
+                Live Data
+            </div>
+        </header>
+
+        <!-- Offline Banner -->
+        <div class="offline-banner" id="offlineBanner">
+            ⚠️ Unable to reach server — retrying…
+        </div>
+
+        <!-- Viewing Context -->
+        <div class="viewing-label" id="viewingLabel">
+            Viewing: <span>Total Home Energy</span>
+        </div>
+
+        <!-- Energy Metrics -->
+        <div class="energy-grid" id="energyGrid">
+            <div class="energy-card" id="cardCurrent">
+                <span class="card-icon">⚡</span>
+                <div class="card-label">Current Usage</div>
+                <div class="card-value value-current" id="currentValue">
+                    <span class="skeleton skeleton-text"></span>
+                </div>
+                <div class="card-unit">Watts (W)</div>
+            </div>
+
+            <div class="energy-card" id="cardPredicted">
+                <span class="card-icon">🔮</span>
+                <div class="card-label">Predicted Usage</div>
+                <div class="card-value value-predicted" id="predictedValue">
+                    <span class="skeleton skeleton-text"></span>
+                </div>
+                <div class="card-unit">Watts (W)</div>
+            </div>
+
+            <div class="energy-card" id="cardStatus">
+                <span class="card-icon">📊</span>
+                <div class="card-label">System Status</div>
+                <div class="card-value" id="statusValue">
+                    <span class="skeleton skeleton-text"></span>
+                </div>
+                <div class="card-unit" id="statusHint">Monitoring…</div>
+            </div>
+        </div>
+
+        <!-- Appliances -->
+        <div class="section-title">🏠 Connected Appliances</div>
+
+        <div class="appliance-grid" id="applianceGrid">
+            <!-- Rendered by JS -->
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <span>⚡</span> Smart Energy Management System &copy; 2026 &mdash; Powered by AI Predictions
+        </div>
+    </div>
+
+    <script>
+        /* ================================================================
+           Smart Energy Management System — Dashboard Logic
+           ================================================================ */
+
+        const API_URL = 'http://98.88.82.213:5000/latest';
+        const POLL_INTERVAL = 3000;
+
+        // Appliance definitions
+        const APPLIANCES = [
+            { id: 'ac',             name: 'AC',              emoji: '❄️'  },
+            { id: 'fan',            name: 'Fan',             emoji: '🌀' },
+            { id: 'lights',         name: 'Lights',          emoji: '💡' },
+            { id: 'refrigerator',   name: 'Refrigerator',    emoji: '🧊' },
+            { id: 'washing',        name: 'Washing Machine', emoji: '🧺' },
+        ];
+
+        let selectedApplianceId = null;
+        let latestData = { current: null, prediction: null, status: null };
+        let isFirstLoad = true;
+
+        // ---- DOM references ----
+        const $currentValue   = document.getElementById('currentValue');
+        const $predictedValue = document.getElementById('predictedValue');
+        const $statusValue    = document.getElementById('statusValue');
+        const $statusHint     = document.getElementById('statusHint');
+        const $viewingLabel   = document.getElementById('viewingLabel');
+        const $applianceGrid  = document.getElementById('applianceGrid');
+        const $offlineBanner  = document.getElementById('offlineBanner');
+
+        // ---- Build Appliance Cards (once) ----
+        function buildApplianceCards() {
+            APPLIANCES.forEach(app => {
+                const card = document.createElement('div');
+                card.className = 'appliance-card';
+                card.id = `appliance-${app.id}`;
+                card.setAttribute('role', 'button');
+                card.setAttribute('tabindex', '0');
+                card.setAttribute('aria-label', `Select ${app.name}`);
+                card.innerHTML = `
+                    <span class="appliance-emoji">${app.emoji}</span>
+                    <div class="appliance-name">${app.name}</div>
+                    <div class="appliance-status">
+                        <span class="status-dot"></span>
+                        ON
+                    </div>
+                `;
+
+                card.addEventListener('click', () => selectAppliance(app.id));
+                card.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        selectAppliance(app.id);
+                    }
+                });
+
+                $applianceGrid.appendChild(card);
+            });
+        }
+
+        // ---- Appliance Selection ----
+        function selectAppliance(id) {
+            // Toggle if same
+            if (selectedApplianceId === id) {
+                selectedApplianceId = null;
+            } else {
+                selectedApplianceId = id;
+            }
+            updateApplianceUI();
+            updateViewingLabel();
+            updateEnergyValues();
+        }
+
+        function updateApplianceUI() {
+            const hasSelection = selectedApplianceId !== null;
+            $applianceGrid.classList.toggle('has-selection', hasSelection);
+
+            APPLIANCES.forEach(app => {
+                const card = document.getElementById(`appliance-${app.id}`);
+                card.classList.toggle('selected', app.id === selectedApplianceId);
+            });
+        }
+
+        function updateViewingLabel() {
+            if (!selectedApplianceId) {
+                $viewingLabel.innerHTML = 'Viewing: <span>Total Home Energy</span>';
+                return;
+            }
+            const app = APPLIANCES.find(a => a.id === selectedApplianceId);
+            if (app) {
+                $viewingLabel.innerHTML = `Viewing: <span>${app.emoji} ${app.name} Energy Usage</span>`;
+            }
+        }
+
+        // ---- Data Rendering ----
+        function flashValue(el) {
+            el.classList.remove('value-flash');
+            // Force reflow
+            void el.offsetWidth;
+            el.classList.add('value-flash');
+        }
+
+        function formatNumber(val) {
+            if (val === null || val === undefined || val === '--') return '--';
+            const num = parseFloat(val);
+            if (isNaN(num)) return val;
+            return num.toFixed(2);
+        }
+
+        function updateEnergyValues() {
+            const cur = formatNumber(latestData.current);
+            const pred = formatNumber(latestData.prediction);
+
+            $currentValue.textContent = cur !== '--' ? `${cur}` : '--';
+            $predictedValue.textContent = pred !== '--' ? `${pred}` : '--';
+
+            if (!isFirstLoad) {
+                flashValue($currentValue);
+                flashValue($predictedValue);
+            }
+
+            // Status
+            const st = (latestData.status || '').toUpperCase();
+            $statusValue.className = 'card-value';
+
+            if (st === 'ALERT') {
+                $statusValue.textContent = '🚨 ALERT';
+                $statusValue.classList.add('status-alert');
+                $statusHint.textContent = 'High energy usage detected';
+            } else if (st === 'OPTIMAL') {
+                $statusValue.textContent = '✅ OPTIMAL';
+                $statusValue.classList.add('status-optimal');
+                $statusHint.textContent = 'Energy usage within ideal range';
+            } else {
+                $statusValue.textContent = 'ℹ️ NORMAL';
+                $statusValue.classList.add('status-normal');
+                $statusHint.textContent = 'Everything is running fine';
+            }
+        }
+
+        // ---- API Fetch ----
+        let consecutiveErrors = 0;
+
+        async function fetchLatestData() {
+            try {
+                const res = await fetch(API_URL);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+
+                if (!data || Object.keys(data).length === 0) return;
+
+                latestData.current    = data.current    ?? null;
+                latestData.prediction = data.prediction ?? null;
+                latestData.status     = data.status     ?? null;
+
+                consecutiveErrors = 0;
+                $offlineBanner.classList.remove('visible');
+
+                updateEnergyValues();
+                isFirstLoad = false;
+
+            } catch (err) {
+                console.warn('[EMS] Fetch error:', err.message);
+                consecutiveErrors++;
+                if (consecutiveErrors >= 2) {
+                    $offlineBanner.classList.add('visible');
+                }
+            }
+        }
+
+        // ---- Initialization ----
+        buildApplianceCards();
+        fetchLatestData();
+        setInterval(fetchLatestData, POLL_INTERVAL);
+    </script>
+</body>
+
+</html>
